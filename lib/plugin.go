@@ -22,7 +22,7 @@ type Plugin struct {
 
 func New(qChan qtypes.QChan, cfg *config.Config, name string) (p Plugin, err error) {
 	p = Plugin{
-		Plugin: qtypes.NewNamedPlugin(qChan, *cfg, pluginTyp, pluginPkg, name, version),
+		Plugin: qtypes.NewNamedPlugin(qChan, cfg, pluginTyp, pluginPkg, name, version),
 		Statsd: statsdaemon.NewNamedStatsdaemon(p.Name, cfg, p.QChan),
 	}
 	return
