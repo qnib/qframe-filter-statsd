@@ -5,7 +5,6 @@ import (
 	"github.com/zpatrick/go-config"
 	"github.com/qnib/qframe-types"
 	"github.com/qnib/statsdaemon/lib"
-	"time"
 )
 
 const (
@@ -20,12 +19,10 @@ type Plugin struct {
 }
 
 
-func New(qChan qtypes.QChan, cfg *config.Config, name string) (p Plugin, err error) {
-	p = Plugin{
-		Plugin: qtypes.NewNamedPlugin(qChan, cfg, pluginTyp, pluginPkg, name, version),
-		Statsd: statsdaemon.NewNamedStatsdaemon(p.Name, cfg, p.QChan),
-	}
-	return
+func New(qChan qtypes.QChan, cfg *config.Config, name string) (Plugin, error) {
+	p := qtypes.NewNamedPlugin(qChan, cfg, pluginTyp, pluginPkg, name, version)
+	sd := statsdaemon.NewNamedStatsdaemon(name, cfg, p.QChan)
+	return Plugin{Plugin: p,Statsd: sd}, nil
 }
 
 // Run fetches everything from the Data channel and flushes it to stdout
@@ -34,8 +31,6 @@ func (p *Plugin) Run() {
 	dc := p.QChan.Data.Join()
 	inputs := p.GetInputs()
 	srcSuccess := p.CfgBoolOr("source-success", true)
-	tickMs := p.CfgIntOr("send-metric-ms", 1000)
-	ticker := time.NewTicker(time.Duration(tickMs)*time.Millisecond).C
 	go p.Statsd.Run()
 	for {
 		select {
@@ -55,11 +50,9 @@ func (p *Plugin) Run() {
 					p.Log("debug", "qcs.SourceSuccess != srcSuccess")
 					continue
 				}
-
+				p.Log("info", fmt.Sprintf("ParseLine(%s)", msg.Message))
 				p.Statsd.ParseLine(msg.Message)
 			}
-		case <-ticker:
-			p.Statsd.FanOutMetrics()
 		}
 	}
 }
