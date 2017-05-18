@@ -21,7 +21,8 @@ type Plugin struct {
 
 func New(qChan qtypes.QChan, cfg *config.Config, name string) (Plugin, error) {
 	p := qtypes.NewNamedPlugin(qChan, cfg, pluginTyp, pluginPkg, name, version)
-	sd := statsdaemon.NewNamedStatsdaemon(name, cfg, p.QChan)
+	sdName := fmt.Sprintf("%s.%s", pluginTyp, name)
+	sd := statsdaemon.NewNamedStatsdaemon(sdName, cfg, p.QChan)
 	return Plugin{Plugin: p,Statsd: sd}, nil
 }
 
@@ -39,18 +40,17 @@ func (p *Plugin) Run() {
 			case qtypes.Message:
 				msg := val.(qtypes.Message)
 				if msg.IsLastSource(p.Name) {
-					p.Log("debug", "IsLastSource() = true")
+					p.Log("trace", "IsLastSource() = true")
 					continue
 				}
 				if len(inputs) != 0 && ! msg.InputsMatch(inputs) {
-					p.Log("debug", fmt.Sprintf("InputsMatch(%v) = false", inputs))
+					p.Log("trace", fmt.Sprintf("InputsMatch(%v) = false", inputs))
 					continue
 				}
 				if msg.SourceSuccess != srcSuccess {
-					p.Log("debug", "qcs.SourceSuccess != srcSuccess")
+					p.Log("trace", "qcs.SourceSuccess != srcSuccess")
 					continue
 				}
-				p.Log("info", fmt.Sprintf("ParseLine(%s)", msg.Message))
 				p.Statsd.ParseLine(msg.Message)
 			}
 		}
