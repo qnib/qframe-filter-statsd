@@ -52,6 +52,9 @@ func (p *Plugin) Run() {
 					continue
 				}
 				p.Statsd.ParseLine(msg.Message)
+			case *qtypes.StatsdPacket:
+				sd := val.(*qtypes.StatsdPacket)
+				p.Statsd.HandlerStatsdPacket(sd)
 			}
 		}
 	}
