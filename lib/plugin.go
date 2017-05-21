@@ -30,8 +30,6 @@ func New(qChan qtypes.QChan, cfg *config.Config, name string) (Plugin, error) {
 func (p *Plugin) Run() {
 	p.Log("notice", fmt.Sprintf("Start plugin v%s", p.Version))
 	dc := p.QChan.Data.Join()
-	inputs := p.GetInputs()
-	srcSuccess := p.CfgBoolOr("source-success", true)
 	go p.Statsd.Run()
 	for {
 		select {
@@ -39,16 +37,7 @@ func (p *Plugin) Run() {
 			switch val.(type) {
 			case qtypes.Message:
 				msg := val.(qtypes.Message)
-				if msg.IsLastSource(p.Name) {
-					p.Log("trace", "IsLastSource() = true")
-					continue
-				}
-				if len(inputs) != 0 && ! msg.InputsMatch(inputs) {
-					p.Log("trace", fmt.Sprintf("InputsMatch(%v) = false", inputs))
-					continue
-				}
-				if msg.SourceSuccess != srcSuccess {
-					p.Log("trace", "qcs.SourceSuccess != srcSuccess")
+				if p.StopProcessingMessage(msg, false) {
 					continue
 				}
 				p.Statsd.ParseLine(msg.Message)
