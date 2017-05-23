@@ -30,7 +30,7 @@ func New(qChan qtypes.QChan, cfg *config.Config, name string) (Plugin, error) {
 func (p *Plugin) Run() {
 	p.Log("notice", fmt.Sprintf("Start plugin v%s", p.Version))
 	dc := p.QChan.Data.Join()
-	go p.Statsd.Run()
+	go p.Statsd.LoopChannel()
 	for {
 		select {
 		case val := <-dc.Read:
