@@ -1,28 +1,29 @@
-package qframe_filter_statsd
+package qframe_filter_statsq
 
 import (
 	"fmt"
 	"github.com/zpatrick/go-config"
 	"github.com/qnib/qframe-types"
-	"github.com/qnib/statsdaemon/lib"
+	"github.com/qnib/statsq/lib"
 )
 
 const (
 	version   = "0.1.2"
 	pluginTyp = "filter"
-	pluginPkg = "statsd"
+	pluginPkg = "statsq"
 )
 
 type Plugin struct {
 	qtypes.Plugin
-	Statsd statsdaemon.StatsDaemon
+	// TODO: rename to statsq
+	Statsd statsq.StatsQ
 }
 
 
 func New(qChan qtypes.QChan, cfg *config.Config, name string) (Plugin, error) {
 	p := qtypes.NewNamedPlugin(qChan, cfg, pluginTyp, pluginPkg, name, version)
 	sdName := fmt.Sprintf("%s.%s", pluginTyp, name)
-	sd := statsdaemon.NewNamedStatsdaemon(sdName, cfg, p.QChan)
+	sd := statsq.NewNamedStatsQ(sdName, cfg, p.QChan)
 	return Plugin{Plugin: p,Statsd: sd}, nil
 }
 
@@ -40,9 +41,11 @@ func (p *Plugin) Run() {
 				if p.StopProcessingMessage(msg, false) {
 					continue
 				}
+				p.Log("debug", fmt.Sprintf("Received Message: %s %v", msg.Message))
 				p.Statsd.ParseLine(msg.Message)
 			case *qtypes.StatsdPacket:
 				sd := val.(*qtypes.StatsdPacket)
+				p.Log("trace", fmt.Sprintf("Received StatsdPacket: %s %v", sd.Bucket, sd.ValFlt))
 				p.Statsd.HandlerStatsdPacket(sd)
 			}
 		}

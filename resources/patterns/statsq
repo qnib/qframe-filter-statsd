@@ -1,0 +1,1 @@
+STATSQ %{WORD:name}:%{INT:value}\|%{WORD:operant}( %{GREEDYDATA:tags})?

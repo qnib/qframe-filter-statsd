@@ -1,0 +1,28 @@
+---
+log:
+  level: "trace"
+  only-plugins: "grok"
+collector:
+  docker-events:
+    docker-host: "unix:///var/run/docker.sock"
+  tcp:
+    bind-port: "11001"
+    bind-host: "0.0.0.0"
+filter:
+  grok:
+    pattern-dir: "/etc/qframe/patterns"
+    inputs: "tcp"
+    pattern: "%{STATSQ}"
+  statsq:
+    inputs: "grok"
+    percentiles: "90,95,99"
+    send-metric-ms: 5000
+handler:
+  influxdb:
+    database: "qframe"
+    host: "172.17.0.1"
+    inputs: "internal,filter.statsq"
+    pattern: "%{INT:number}"
+    ticker-msec: "2000"
+    batch-size: "500"
+
