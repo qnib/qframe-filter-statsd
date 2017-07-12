@@ -1,6 +1,8 @@
 # qframe-filter-statsq
 Qframe filter, which starts a StatsD cache and consumes messages.
 
+**Depreciated!** Moved to [qframe/filter-statsq](https://github.com/qframe/filter-statsq)
+
 ## Development
 
 ```bash
